@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--
+        触发器有四种：
+            SimpleTrigger：简单的触发器
+            CronTirgger：根据时间表达式来触发 触发器执行任务
+            DateIntervalTrigger：规定的某月的某天，某年的某天，或者某段时间执行触发器
+            NthIncludedDayTrigger；间接执行触发器
+        前两种在xml中配置很方便，后两种使用方法更便捷
+    -->
+
+    <!-- 线程执行配置，用于任务注册 -->
+    <bean id="executor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="10"/>
+        <property name="maxPoolSize" value="100"/>
+        <property name="queueCapacity" value="500"/>
+    </bean>
+
+    <!-- 业务执行代码 -->
+    <bean id="myCustomTask" class="com.multimodule.customquartz.quartz.MyCustomTask"/>
+    <bean id="myTask" class="com.multimodule.customquartz.quartz.MyTask"/>
+
+    <!-- 一个任务调度，搭配一个触发器；如果任务调度的时间安排一样可以多个  start -->
+    <!-- 任务调度 -->
+    <bean id="myJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="myCustomTask"/>
+        <property name="targetMethod" value="runTask" />
+        <!-- 设置并发的 -->
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!-- 增加调用的触发器，出发时间 -->
+    <bean id="myTrigger2" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="myJobDetail"/>
+        <property name="cronExpression" value="*/5 * * * * ?"/>
+    </bean>
+    <!-- 一个任务调度，搭配一个触发器；如果任务调度的时间安排一样可以多个  end -->
+
+    <!-- 任务调度 -->
+    <bean id="myJobDetail2" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="myTask"/>
+        <property name="targetMethod" value="getWordTime" />
+    </bean>
+
+    <!-- 增加调用的触发器，出发时间 -->
+    <bean id="myTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="myJobDetail2"/>
+        <property name="cronExpression" value="0/1 * * * * ?"/>
+    </bean>
+
+    <!-- 设置调度-->
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="myTrigger"/>
+                <ref bean="myTrigger2"/>
+            </list>
+        </property>
+        <!-- 使用自己定义的线程池 -->
+        <property name="taskExecutor" ref="executor"/>
+    </bean>
+</beans>

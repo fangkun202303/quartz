@@ -1,0 +1,9 @@
+quartz:
+  cronExpressionOf5: "*/5 * * * * ?"
+  cronExpressionOf1: "0/1 * * * * ?"
+
+
+#打印dao层的DEBUG级别的sql
+logging:
+  level:
+    com.multimodule.bootquartz: DEBUG
