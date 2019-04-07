@@ -1,5 +1,6 @@
 package com.multimodule.bootquartz.config;
 
+import com.multimodule.bootquartz.task.MyTask;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,12 +11,12 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 /**
  * @ClassName: MyQuartzBean
- * @Description: TODO
+ * @Description: 这个执行单个触发器的类
  * @Author: FangKun
  * @Date: Created in 2019/4/3 15:32
  * @Version: 1.0
  */
-@Configuration
+//@Configuration
 public class MyQuartzConfigBean {
 
     //一秒执行一次
@@ -29,7 +30,7 @@ public class MyQuartzConfigBean {
     /**
      * @MethodName getMethodInvokingJobDetailFactoryBean
      * @Description 任务调度
-     * @param MyList
+     * @param myTask 任务类
      * @Return org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean
      * @Exception
      * @Author FangKun
@@ -37,47 +38,14 @@ public class MyQuartzConfigBean {
      * @Date 2019/4/3 16:08
      */
     @Bean(name = "detailFactoryBean")
-    public MethodInvokingJobDetailFactoryBean getMethodInvokingJobDetailFactoryBean(MyList myList){
+    public MethodInvokingJobDetailFactoryBean getMethodInvokingJobDetailFactoryBean(MyTask myTask){
         MethodInvokingJobDetailFactoryBean bean=new MethodInvokingJobDetailFactoryBean();
         //设置任务调蓄的线程并发
         bean.setConcurrent(false);
-
-        myList.getList().stream().forEach(task ->{
-            //设置任务类
-            bean.setTargetObject(task);
-            bean.setGroup(task.substring(task.lastIndexOf(".")+1));
-            //执行那个方法，这里用到反射，规定这个任务类中只能有一个方法为共有的，这样就不需要配置文件
-            String name1 =null;
-            try {
-                Class<?> aClass = Class.forName(task);
-
-                bean.setTargetMethod(aClass.getMethods()[0].getName());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        });
+        //设置任务类
+        bean.setTargetObject(myTask);
+        bean.setTargetMethod("run");
         return bean;
-    }
-
-    /**
-     * @MethodName getSchedulerFactoryBean
-     * @Description 设置调度
-     * @param cronTriggerFactoryBean
-     * @Return org.springframework.scheduling.quartz.SchedulerFactoryBean
-     * @Exception
-     * @Author FangKun
-     * @Version V1.0.0
-     * @Date 2019/4/3 16:43
-     */
-    @Bean(name = "schedulerFactoryBean")
-    public SchedulerFactoryBean getSchedulerFactoryBean(CronTriggerFactoryBean cronTriggerFactoryBean,ThreadPoolTaskExecutor threadPoolTaskExecutor){
-        SchedulerFactoryBean schedulerFactoryBean =new SchedulerFactoryBean();
-        schedulerFactoryBean.setTriggers(cronTriggerFactoryBean.getObject());
-        //但这个连接池没有自定义时，我们使用默认的
-        if(threadPoolTaskExecutor!=null){
-            schedulerFactoryBean.setTaskExecutor(threadPoolTaskExecutor);
-        }
-        return schedulerFactoryBean;
     }
 
     /**
@@ -102,4 +70,25 @@ public class MyQuartzConfigBean {
         return cronTriggerFactoryBean;
     }
 
+    /**
+     * @MethodName getSchedulerFactoryBean
+     * @Description 设置调度
+     * @param cronTriggerFactoryBean
+     * @Return org.springframework.scheduling.quartz.SchedulerFactoryBean
+     * @Exception
+     * @Author FangKun
+     * @Version V1.0.0
+     * @Date 2019/4/3 16:43
+     */
+    @Bean(name = "schedulerFactoryBean")
+    public SchedulerFactoryBean getSchedulerFactoryBean(CronTriggerFactoryBean cronTriggerFactoryBean,ThreadPoolTaskExecutor threadPoolTaskExecutor){
+        SchedulerFactoryBean schedulerFactoryBean =new SchedulerFactoryBean();
+
+        schedulerFactoryBean.setTriggers(cronTriggerFactoryBean.getObject());
+        //但这个连接池没有自定义时，我们使用默认的
+        if(threadPoolTaskExecutor!=null){
+            schedulerFactoryBean.setTaskExecutor(threadPoolTaskExecutor);
+        }
+        return schedulerFactoryBean;
+    }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @ClassName: MyList
- * @Description: TODO
+ * @Description: 这个类是将list封装
  * @Author: FangKun
  * @Date: Created in 2019/4/3 17:39
  * @Version: 1.0
